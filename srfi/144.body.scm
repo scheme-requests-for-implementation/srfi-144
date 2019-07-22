@@ -403,20 +403,25 @@
 ;(define fllog R6RS)                 ; defined by (rnrs arithmetic flonums)
 
 ;;; Returns log(x+1), as in C99 log1p.
-;;;
-;;; log (x + 1) = \sum_{n=1}^\infty - (-1)^n x^n/n
+
+;;; See
+
+;;; https://stat.ethz.ch/pipermail/r-devel/2003-August/027396.html
+;;; https://books.google.com/books?id=OjUyDwAAQBAJ&pg=PA290&lpg=PA290&dq=beebe+log1p&source=bl&ots=VLxmiSk1fA&sig=ACfU3U0_8tqKemomSjKW73iJ0zUO1u3p3Q&hl=en&sa=X&ved=2ahUKEwjfxZbE8LvhAhVNm-AKHWScB7w4ChDoATAAegQICRAB#v=onepage&q=beebe%20log1p&f=false
+
+;;; for justification
+
 
 (define fllog1+
   (flop1 'fllog1+
-         (let ((coefs (cons 0.0
-                            (map fl/
-                                 '(1.0 -2.0 3.0 -4.0 5.0
-                                   -6.0 7.0 -8.0 9.0 -10.0)))))
-           (lambda (x)
-             (cond ((fl<? (flabs x) 0.5)    ; FIXME
-                    (polynomial-at x coefs))
+         (lambda (x)
+           (let ((u (fl+ 1.0 x)))
+             (cond ((fl=? u 1.0)
+                    x) ;; gets sign of zero result correct
+                   ((fl=? u x)
+                    (fllog u)) ;; large arguments and infinities
                    (else
-                    (fllog (fl+ 1.0 x))))))))
+                    (fl* (fllog u) (fl/ x (fl- u 1.0)))))))))
            
 
 (define fllog2 (flop1 'fllog2 (lambda (x) (log x 2.0))))
