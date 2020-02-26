@@ -1,5 +1,5 @@
 ;;; Copyright (C) William D Clinger (2016).
-;;; 
+;;;
 ;;; Permission is hereby granted, free of charge, to any person
 ;;; obtaining a copy of this software and associated documentation
 ;;; files (the "Software"), to deal in the Software without
@@ -8,10 +8,10 @@
 ;;; sell copies of the Software, and to permit persons to whom the
 ;;; Software is furnished to do so, subject to the following
 ;;; conditions:
-;;; 
+;;;
 ;;; The above copyright notice and this permission notice shall be
 ;;; included in all copies or substantial portions of the Software.
-;;; 
+;;;
 ;;; THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
 ;;; EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
 ;;; OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
@@ -19,7 +19,7 @@
 ;;; HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 ;;; WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 ;;; FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
-;;; OTHER DEALINGS IN THE SOFTWARE. 
+;;; OTHER DEALINGS IN THE SOFTWARE.
 
 ;;; References
 ;;;
@@ -422,7 +422,7 @@
                     (fllog u)) ;; large arguments and infinities
                    (else
                     (fl* (fllog u) (fl/ x (fl- u 1.0)))))))))
-           
+
 
 (define fllog2 (flop1 'fllog2 (lambda (x) (log x 2.0))))
 
@@ -482,46 +482,72 @@
 (define flasinh
   (flop1 'flasinh
          (lambda (x)
-           (define (eqn4.6.31 x^2 c k k0)
-             (if (> k 45) ; FIXME
-                 c
-                 (fl+ c
-                      (fl* x^2
-                           (eqn4.6.31 x^2
-                                      (fl- (fl/ (fl* c k0 k0)
-                                                (fl* (fl+ k0 1.0)
-                                                     (fl+ k0 2.0))))
-                                      (+ k 2)
-                                      (fl+ k0 2.0))))))
-           (cond ((flzero? x) x)
-                 ((not (flfinite? x)) x)
-                 ((fl<? x 0.0)
+           (cond ((or (flinfinite? x)
+                      (flnan? x))
+                  x)
+                 ((flnegative? x)
                   (fl- (flasinh (fl- x))))
-                 ((fl<? x 0.5)
-                  (fl* x (eqn4.6.31 (fl* x x) 1.0 1 1.0)))
+                 ((fl<? x 3.725290298461914e-9)   ;; (flexpt 2. -28.)
+                  x)
+                 ((fl<? x 2.)
+                  ;; the naive formula is
+                  ;; (log (+ x (sqrt (+ (square x) 1))))
+
+                  ;; We want to
+                  ;; 1.  Use exact operations when possible (no roundoff)
+                  ;; 2.  Add or subtract things of differing magnitudes,
+                  ;;     so for most arguments at most one roundoff error.
+
+                  ;; Biggeset possible problem near x=0, so we write
+                  ;; (sqrt (+ 1 (square x)))
+                  ;; as
+                  ;; (+ 1 (- (sqrt (+ 1 (square x))) 1))
+                  ;; and then multiply the second part in
+                  ;; numerator and denominator by
+                  ;; (+ (sqrt (+ 1 (square x))) 1)
+
+                  (let ((x^2 (flsquare x)))
+                    (fllog1+ (fl+ x
+                                  (fl/ x^2
+                                       (fl+ 1.
+                                            (flsqrt (fl+ 1.0 x^2))))))))
+                 ((fl<? x 268435456.) ;; (flexpt 2. 28.)
+                  (let ((x^2 (flsquare x)))
+                    (fllog (fl+ (fl* 2. x) ;; exact
+                                ;; the rest is small
+                                (fl/ 1.
+                                     (fl+ x
+                                          (flsqrt (fl+ 1.0 x^2))))))))
                  (else
-                  (let* ((x^2+1 (fl+ (fl* x x) 1.0))
-                         (root (if (flfinite? x^2+1)
-                                   (flsqrt x^2+1)
-                                   x))
-                         (a (fl+ x root)))
-                    (if (flfinite? a)
-                        (fllog a)
-                        (fl+ fl-log-2 (fllog x)))))))))
+                  (fl+ (fllog x) fl-log-2))))))
 
 (define flacosh
   (flop1 'flacosh
          (lambda (x)
-           (if (fl<=? x 0.5)
-               +nan.0
-               (let* ((x^2-1 (fl- (fl* x x) 1.0))
-                      (root (if (flfinite? x^2-1)
-                                (flsqrt x^2-1)
-                                x))
-                      (a (fl+ x root)))
-                 (if (flfinite? a)
-                     (fllog a)
-                     (fl+ fl-log-2 (fllog x))))))))
+           (cond ((flnan? x) x)
+                 ((fl<? x 1.0) +nan.0)
+                 ((fl<? x 2.0)
+                  ;; the naive formula is
+                  ;; (log (+ x (sqrt (- (square x) 1))))
+
+                  ;; We want to
+                  ;; 1.  Use exact operations when possible (no roundoff)
+                  ;; 2.  Add or subtract things of differing magnitudes,
+                  ;;     so for most arguments at most one roundoff error.
+
+                  (let ((x-1 (fl- x 1.))) ;; exact
+                    (fllog1+ (fl+ x-1 ;; smaller than next expression
+                                  (flsqrt (fl+ (fl* 2. x-1) ;; exact
+                                               ;; relatively small
+                                               (flsquare x-1)))))))
+                 ((fl<? x 268435456.) ;; (flexpt 2. 28.)
+                  (fllog (fl- (fl* 2. x) ;; exact
+                              ;; next is smaller
+                              (fl/ (fl+ x (flsqrt (fl* (fl- x 1.) ;; exact
+                                                       (fl+ x 1.) ;; exact
+                                                       )))))))
+                 (else
+                  (fl+ (fllog x) fl-log-2))))))
 
 (define flatanh
   (flop1 'flatanh
