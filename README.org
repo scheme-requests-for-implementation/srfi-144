@@ -1,6 +1,8 @@
 * SRFI 144: Flonums
 
-** by John Cowan, Will Clinger
+** by John Cowan and Will Clinger
+
+
 
 This repository hosts [[https://srfi.schemers.org/srfi-144/][SRFI 144]]: Flonums, a [[https://srfi.schemers.org/][Scheme Request for Implementation]].
 
