@@ -552,20 +552,18 @@
 (define flatanh
   (flop1 'flatanh
          (lambda (x)
-           (define (eqn4.6.33 x^2 k k0)
-             (if (> k 50) ; FIXME
-                 (fl/ k0)
-                 (fl+ (fl/ k0)
-                      (fl* x^2
-                           (eqn4.6.33 x^2 (+ k 2) (+ k0 2.0))))))
-           (cond ((flzero? x) x)
-                 ((not (flfinite? x)) x)
-                 ((fl<? x 0.0)
+           (cond ((fl<? x 0.)
                   (fl- (flatanh (fl- x))))
-                 ((fl<? x 0.5)
-                  (fl* x (eqn4.6.33 (fl* x x) 1 1.0)))
+                 ;; we rewrite
+                 ;; (/ (+ 1 x) (- 1 x))
+                 ;; as
+                 ;; (+ 1 (* 2 (/ x (- 1 x))))
+                 ;; and call fllog1+ instead of fllog
                  (else
-                  (fl* 0.5 (fllog (fl/ (fl+ 1.0 x) (fl- 1.0 x)))))))))
+                  (fl* +0.5                                    ;; exact
+                       (fllog1+ (fl* +2.0                      ;; exact
+                                     (fl/ x
+                                          (fl- 1.0 x)))))))))) ;; exact
 
 ;;; Integer division
 
