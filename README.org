@@ -4,6 +4,8 @@
 
 
 
+keywords: [[https://srfi.schemers.org/?keywords=arithmetic][Arithmetic]]
+
 This repository hosts [[https://srfi.schemers.org/srfi-144/][SRFI 144]]: Flonums, a [[https://srfi.schemers.org/][Scheme Request for Implementation]].
 
 This SRFI is in /final/ status.
