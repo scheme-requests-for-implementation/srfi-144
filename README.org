@@ -4,7 +4,7 @@
 
 
 
-keywords: [[https://srfi.schemers.org/?keywords=arithmetic][Arithmetic]]
+keywords: [[https://srfi.schemers.org/?keywords=arithmetic][Arithmetic]], [[https://srfi.schemers.org/?keywords=r7rs-large-tangerine][R7RS Large, Tangerine Edition]]
 
 This repository hosts [[https://srfi.schemers.org/srfi-144/][SRFI 144]]: Flonums, a [[https://srfi.schemers.org/][Scheme Request for Implementation]].
 
