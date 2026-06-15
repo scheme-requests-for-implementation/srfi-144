@@ -40,15 +40,19 @@ John Cowan, Will Clinger
 	about <code>fl-greatest</code> and
 	<code>fl-least</code>.)</li>
       <li>2019-04-04 (Clarified definitions of <code>fl-greatest</code> and <code>fl-least</code>.)</ul></li>
-</ul>
-
-<p><b>Post-finalization note:</b>
-It is recommended that implementors return <code>+nan.0</code>
-(if the implementation supports that number)
+  <li id="pfn1"><b>Post-finalization note added on 2018-11-17</b>:
+The author recommends that implementors return <code>+nan.0</code>
+    (if the implementation supports that number)
 from <code>flonum</code> when the argument is a non-real number,
 rather than signaling an error.
 This behavior is permitted but not required by the current specification.
-</p>
+  </li>
+  <li id="pfn2"><b>Post-finalization note added on 2026-06-15</b>: The
+  author recommends adding <code>flsubnormal?</code> as an alias
+  of <code>fldenormalized?</code> to address the fact that, in the
+  2019 revision to IEEE 754, the term "denormalized number" has been
+  completely replaced by the term "subnormal number".</li>
+</ul>
 
 <h1>Abstract</h1>
 
