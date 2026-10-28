@@ -16,6 +16,9 @@
                 flo:error-bound
                 flo:logb flo:sign-negative?
                 flo:max flo:min
+                ;; exception stuff
+                flo:raise-exceptions!
+                flo:exception:invalid-operation
                 ;; Renamed imports
                 flo:signed-lgamma
                 flo:largest-positive-normal
