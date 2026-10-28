@@ -35,6 +35,7 @@
                 ;; exception stuff
                 flo:raise-exceptions!
                 flo:exception:invalid-operation
+                flo:exception:divide-by-zero
                 ;; Renamed imports
                 flo:signed-lgamma
                 flo:largest-positive-normal
