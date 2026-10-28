@@ -1,3 +1,19 @@
+;;;; (C) 2026 Peter McGoron
+;;;; 
+;;;; This program is free software; you can redistribute it and/or
+;;;; modify it under the terms of the GNU General Public License
+;;;; as published by the Free Software Foundation; either version 2
+;;;; of the License, or (at your option) any later version.
+;;;; 
+;;;; This program is distributed in the hope that it will be useful,
+;;;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;;; GNU General Public License for more details.
+;;;; 
+;;;; You should have received a copy of the GNU General Public License
+;;;; along with this program; if not, see
+;;;; <https://www.gnu.org/licenses/>.
+
 (define-library (srfi 144)
   (import (scheme base) (scheme case-lambda)
           (only (srfi 1) filter-map)
@@ -47,7 +63,6 @@
                   (flo:smallest-positive-subnormal fl-least)
                   (flo:error-bound fl-epsilon/2)
                   (flo:nextafter fladjacent)
-                  (flo:ldexp make-flonum)
                   (flo:copysign flcopysign)
                   (flo:flonum? flonum?)
                   (flo:unordered? flunordered?)
@@ -168,7 +183,15 @@
            `(,(r 'define) (,name . ,formals)
              (,(r 'let) (,@checks)
                ,@body))))))
-    (define flonum inexact)
+    (define (flonum x)
+      (if (not (real? x))
+          +nan.0
+          (inexact x)))
+    (define (make-flonum fl e)
+      (cond
+       ((flinfinite? fl) fl)
+       ((flnan? fl) fl)
+       (else (flo:ldexp fl e))))
     (define-checked (flinteger-fraction (fl assert-flonum))
       ;; fl = (1 + m)*2^e
       (cond
@@ -253,7 +276,8 @@
     (define fl<=? (nary-predicate 'fl<=? flo:safe<=))
     (define fl>=? (nary-predicate 'fl>=? flo:safe>=))
     (define-checked (flinteger? (fl assert-flonum))
-      (flo:safe= fl (flround fl)))
+      (and (flfinite? fl)
+           (flo:safe= fl (flround fl))))
     (define assert-flinteger
       (restarter flinteger? "Prompt for a new integer flonum value."
                  "integer flonum"))
@@ -382,7 +406,7 @@
     (define-checked (flabsdiff (x assert-flonum) (y assert-flonum))
       (flabs (flo:- x y)))
     (define-checked (flposdiff (x assert-flonum) (y assert-flonum))
-      (if (flo:safe< x y)
+      (if (flo:safe<= x y)
           +0.0
           (flo:- x y)))
     (define-checked (flsgn (x assert-flonum))
