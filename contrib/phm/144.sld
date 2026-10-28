@@ -219,7 +219,7 @@
       (cond
         ((flnan? fl) fl)
         ((flzero? fl) (flonum -inf.0))
-        ((flinfinite? fl) fl)
+        ((flinfinite? fl) +inf.0)
         (else (flonum (flo:logb fl)))))
     (define-checked (flnormalized-fraction-exponent (fl assert-flonum))
       (cond
