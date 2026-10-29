@@ -322,39 +322,19 @@
     (define-nary-prop flmax flo:max -inf.0)
     (define-nary-prop flmin flo:min +inf.0)
 
-    (define fl+
-      (case-lambda
-        (() 0.0)
-        ((x) (assert-flonum 'fl+ x))
-        ((x y) (flo:+ (assert-flonum 'fl+ x)
-                      (assert-flonum 'fl+ y)))
-        ((x y w . input)
-         ;; Neumaier summation
-         (letrec ((loop
-                   (lambda (sum c input)
-                     (if (null? input)
-                         (flo:+ sum c)
-                         (let ((x (assert-flonum 'fl+ (car input))))
-                           (let ((t (flo:+ sum x)))
-                             (if (flinfinite? t)
-                                 (for-infinite t (cdr input))
-                                 (let ((c* (if (flo:safe>=
-                                                (flo:abs sum)
-                                                (flo:abs x))
-                                               (flo:+ (flo:- sum t) x)
-                                               (flo:+ (flo:- x t) sum))))
-                                   (loop t (flo:+ c c*) (cdr input)))))))))
-                  (for-infinite
-                   (lambda (sum rest)
-                     (if (null? rest)
-                         sum
-                         (for-infinite (flo:+ sum
-                                              (assert-flonum 'fl+ (car rest)))
-                                       (cdr rest))))))
-           (loop (assert-flonum 'fl+ x)
-                 0.0
-                 (cons (assert-flonum 'fl+ y)
-                       (cons (assert-flonum 'fl+ w) input)))))))
+    (define (fl+ . args)
+      (cond
+        ((null? args) 0.0)
+        ((null? (cdr args))
+         (assert-flonum 'fl+ (car args)))
+        (else
+         (let loop ((acc (flo:+ (assert-flonum 'fl+ (car args))
+                                (assert-flonum 'fl+ (cadr args))))
+                    (rest (cddr args)))
+           (if (null? rest)
+               acc
+               (loop (flo:+ acc (assert-flonum 'fl+ (car rest)))
+                     (cdr rest)))))))
 
     ;;; For fl*, see
     ;;; Stef Graillat. Accurate Floating Point Product and
@@ -371,37 +351,19 @@
           (lambda (x y z)
             (flo:+ (flo:* x y) z))))
 
-    (define fl*
-      (case-lambda
-        (() 1.0)
-        ((x) (assert-flonum 'fl* x))
-        ((x y) (flo:* (assert-flonum 'fl* x) (assert-flonum 'fl* y)))
-        ((x y w . input)
-         (letrec ((loop
-                   (lambda (p e list)
-                     (cond
-                       ((null? list)
-                        (if (zero? e)       ; (flo:+ -0.0 0.0) => 0.0, so this
-                            p               ; check is required so
-                            (flo:+ p e)))   ; (flo:* -0.0 -0.0 -0.0) => -0.0
-                       (else
-                        (let*-values (((y) (assert-flonum 'fl* (car list)))
-                                      ((p e-here) (twomult p y)))
-                          (if (flfinite? p)
-                              (loop p
-                                    (maybefma e y e-here)
-                                    (cdr list))
-                              (specials p (cdr list))))))))
-                  (specials
-                   (lambda (acc list)
-                     (if (null? list)
-                         acc
-                         (specials (flo:* acc (assert-flonum 'fl*
-                                                             (car list)))
-                                   (cdr list))))))
-           (loop (assert-flonum 'fl* x)
-                 0.0
-                 (cons y (cons w input)))))))
+    (define (fl* . args)
+      (cond
+        ((null? args) 1.0)
+        ((null? (cdr args))
+         (assert-flonum 'fl* (car args)))
+        (else
+         (let loop ((acc (flo:* (assert-flonum 'fl* (car args))
+                                (assert-flonum 'fl* (cadr args))))
+                    (rest (cddr args)))
+           (if (null? rest)
+               acc
+               (loop (flo:* acc (assert-flonum 'fl* (car rest)))
+                     (cdr rest)))))))
 
     (define-nary-prop fl- flo:- (error "wrong number of arguments to fl-") flo:negate)
     (define-nary-prop fl/ 
