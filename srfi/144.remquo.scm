@@ -152,10 +152,6 @@
         (ay (flabs y)))
     (cond
       ((or (flzero? y) (not (flfinite? x)) (flnan? y))
-       (cond-expand
-         (mit
-          (flo:raise-exceptions! (flo:exception:invalid-operation)))
-         (else #f))
        (fl/ (fl* x y) (fl* x y)))
       ((fl=? ax ay) (flcopysign 0.0 ax))
       ((fl<? ax ay)
