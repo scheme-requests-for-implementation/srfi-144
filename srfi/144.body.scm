@@ -593,8 +593,20 @@ followed by truncation to integer. Without the ability to change the
 rounding mode, the best thing to do is to implement this as a primitive.
 
 On modern architectures, one can embed the rounding in the instruction.
-For example, fdiv.d.rtz will divide its arguments using round-to-zero
-(aka truncating).
+For example, in pseudo-RISC-V:
+
+	; f0 = x
+	; f1 = y
+	; f2 = empty (destination register)
+	; r1 = empty (integer register)
+
+	fdiv.d f0, f1, f2, rne ; round-to-nearest division
+	fclass.d f2, r1
+	andi r1, 0b10000001    ; check for positive or negative infinity
+	beq r1, r0, .return    ; r0 in RISC-V always has zero bits
+	fdiv.d f0, f1, f2, rtz ; round-towards-zero division
+	.return:
+	ret f2
 
 The next best thing is to implement it in C, or some other low-level
 language with access to the floating-point environment:
@@ -604,7 +616,37 @@ language with access to the floating-point environment:
 double truncating_quotient(double x, double y)
 {
 	int rounding_mode = fegetround();
-	double result;
+	/* Note: Some "optimizing" compilers will combine this x/y and the
+	 * second x/y in the floating point environment, even though they
+	 * might return different numbers. This will defeat the whole
+	 * purpose of this function.
+	 *
+	 * This specific function has to be compiled without such
+	 * "optimizations."
+	 */
+	double result = x/y;
+
+	/* The TOWARDZERO mode will always return the largest positive
+	 * flonum when two finite numbers are divided and their result
+	 * would be outside of the representable range.
+	 *
+	 * This overflows all results that would overflow in the current
+	 * rounding mode (assumed to be round-to-nearest).
+	 *
+	 * IEEE 754-2019 says that the round-to-nearest modes will
+	 * overflow if the result is greater in magnitude than
+	 * b^{emax}×(b-½b^{1-p}). For binary64, this is 2^1023×(2 - b^-53).
+	 * Note that the largest representable binary64 number is
+	 * 2^1023×(2 - b^-52). Hence if a division overflows in RN, it's
+	 * exact truncated quotient would be multiple integers above the
+	 * largest representable floating point number, so it should be
+	 * infinity.
+	 *
+	 * So this implementation should cover all cases.
+	 */
+	if (isinf(result)) {
+		return result;
+	}
 
 	fesetround(FE_TOWARDZERO);
 	result = x/y;
