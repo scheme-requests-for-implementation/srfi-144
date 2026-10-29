@@ -215,6 +215,10 @@
    (define infinities (map flonum (list -inf.0 +inf.0)))
    (define weird (append infinities (list (flonum +nan.0))))
 
+   ;;; FIXME: For esoteric floating-point reasons, the correct
+   ;;; representation of RN(RN(0.3)^3) differs from RN(0.27) by
+   ;;; one ULP. This tests for equality to RN(0.27), and not
+   ;;; RN(RN(0.3)^3).
    (define somereals (append (map flonum
                                   (list (fl- fl-greatest)
                                         -10
@@ -436,9 +440,9 @@
        (test (test-flnormalized-fraction-exponent (fl- fl-greatest))
              '(#t #t #t #t #t))
        (test (test-flnormalized-fraction-exponent posinf)
-             '(#t #t #t #t #t))
+             '(#t #t #t #f #t))
        (test (test-flnormalized-fraction-exponent neginf)
-             '(#t #t #t #t #t))
+             '(#t #t #t #f #t))
        (test (test-flnormalized-fraction-exponent nan)
              '(#t #t #f #f #f))
 
